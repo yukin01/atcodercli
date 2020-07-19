@@ -23,25 +23,25 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+	"path/filepath"
+
+	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var cfgDir string
+var local bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "atcodercli",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:   "atc",
+	Short: "AtCoder CLI is a tool that helps you to join atcoder contests.",
+	Long: `AtCoder CLI is a tool written in Go that helps you to join atcoder contests.
+Currently, only C++ is supported.
+`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -63,7 +63,8 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.atcodercli.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgDir, "config-dir", "", "global config directory (default is $HOME/.atcodercli)")
+	rootCmd.PersistentFlags().BoolVarP(&local, "local", "l", false, "write to the repository .atcodercli")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -72,22 +73,18 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
+	if cfgDir == "" {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
-		// Search config in home directory with name ".atcodercli" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".atcodercli")
+		cfgDir = filepath.Join(home, ".atcodercli")
 	}
 
+	viper.AddConfigPath(cfgDir)
+	viper.SetConfigName("config")
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
